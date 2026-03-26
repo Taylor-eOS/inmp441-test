@@ -47,8 +47,6 @@ void loop() {
     size_t bytes_read = 0;
     i2s_read(I2S_PORT, sBuf, sizeof(sBuf), &bytes_read, portMAX_DELAY);
     int count = bytes_read / 4;
-    for (int i = 0; i < count; i++) {
-        sBuf[i] >>= 8;
-    }
     Serial.write((uint8_t*)sBuf, count * 4);
 }
+
