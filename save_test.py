@@ -10,9 +10,18 @@ ser = serial.Serial('/dev/ttyACM0', 921600)
 total_bytes = SAMPLE_RATE * RECORD_SECONDS * 4
 
 print(f"Recording {RECORD_SECONDS}s...")
-raw = ser.read(total_bytes)
+chunks = []
+received = 0
+while received < total_bytes:
+    chunk = ser.read(min(1024, total_bytes - received))
+    data = np.frombuffer(chunk, dtype=np.int32) >> 8
+    received += len(chunk)
+    rms = int(np.sqrt(np.mean(data.astype(np.float64) ** 2))) if len(data) else 0
+    bar = "#" * min(40, rms // 500000)
+    print(f"{received}/{total_bytes} bytes  rms={rms:10d}  {bar}")
+    chunks.append(data)
 
-samples = np.frombuffer(raw, dtype=np.int32) >> 8
+samples = np.concatenate(chunks)
 samples_16 = (samples >> 8).clip(-32768, 32767).astype(np.int16)
 
 with wave.open("test.wav", "w") as wf:
